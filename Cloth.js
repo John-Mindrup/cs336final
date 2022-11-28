@@ -42,6 +42,68 @@ var vertexbuffer;
 // handle to the compiled shader program on the GPU
 var shader;
 
+
+function Particle(x, y, z, m)
+{
+  this.position = new THREE.Vector3(x, y, z);
+  this.previous = new THREE.Vector3(x, y, z);
+  this.original = new THREE.Vector3(x, y, z);
+
+  this.accel = new THREE.Vector3(0, 0, 0);
+  this.mass = m;
+  this.invMass = 1/this.mass;
+  this.tmp = new THREE.Vector3();
+  this.tmp2 = new THREE.Vector3();
+
+}
+
+Particle.prototype.addForce = function(force)
+{
+  this.accel.add(
+    this.tmp2.copy(force).multiplyScaler(this.invMass)
+  );
+}
+
+Particle.prototype.integrate = function( timesq ) {
+
+  var newPos = this.tmp.subVectors(this.position, this.previous);
+  newPos.multiplyScalar(DRAG).add(this.position);
+  newPos.add( this.accel.multiplyScalar(timesq));
+
+  this.tmp = this.previous;
+  this.previous = this.position;
+  this.position = newPos;
+
+  this.accel.set(0, 0, 0);
+
+};
+
+function satisifyConstrains( p1, p2, distance) {
+  var diff;
+  diff.subVectors( p2.position, p1.position );
+  var currentDist = diff.length();
+  if ( currentDist == 0 ) return; // prevents division by 0
+  var correction = diff.multiplyScalar( (currentDist - distance) / currentDist);
+  var correctionHalf = correction.multiplyScalar( 0.5 );
+  p1.position.add( correctionHalf );
+  p2.position.sub( correctionHalf );
+
+}
+
+function repelParticles( p1, p2, distance) {
+  var diff;
+  diff.subVectors( p2.position, p1.position );
+  var currentDist = diff.length();
+  if ( currentDist == 0 ) return; // prevents division by 0
+  if (currentDist < distance){
+    var correction = diff.multiplyScalar( (currentDist - distance) / currentDist);
+    var correctionHalf = correction.multiplyScalar( 0.5 );
+    p1.position.add( correctionHalf );
+    p2.position.sub( correctionHalf );
+  }
+
+}
+
 function draw()
 {
     // clear the framebuffer
