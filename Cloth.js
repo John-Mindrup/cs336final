@@ -45,6 +45,14 @@ var shader;
 var MASS = .1;
 var DRAG = .97;
 
+var GRAVITY = 9.81 * 140;
+var gravity = new THREE.Vector3( 0, - GRAVITY, 0 ).multiplyScalar( MASS );
+
+var TIMESTEP = 18 / 1000;
+var TIMESTEP_SQ = TIMESTEP * TIMESTEP;
+
+var diff = new THREE.Vector3();
+
 var camera, scene, renderer;
 const canvas = document.getElementById('theCanvas');
 
@@ -56,9 +64,14 @@ var restDistanceS = Math.sqrt(2);
 var xSegs = 30; // how many particles wide is the cloth
 var ySegs = 30; // how many particles tall is the cloth
 
+var itemSize = 40;
+var table;
+
 var initialBlanketPos = Blanket(500, 500);
 var blanket;
 var cloth = new Cloth( xSegs, ySegs, fabricLength );
+
+var lastTime;
 
 function Blanket(width, height) {
     return function (u, v) {
@@ -86,9 +99,9 @@ function Particle(x, y, z, m)
 
 Particle.prototype.addForce = function(force)
 {
-  this.accel.add(
-    this.tmp2.copy(force).multiplyScaler(this.invMass)
-  );
+    this.accel.add(
+        this.tmp2.copy( force ).multiplyScalar( this.invMass )
+      );
 }
 
 Particle.prototype.integrate = function (timesq) {
@@ -104,7 +117,7 @@ Particle.prototype.integrate = function (timesq) {
 };
 
 function satisifyConstrains(p1, p2, distance) {
-    var diff;
+    var diff = new THREE.Vector3();
     diff.subVectors(p2.position, p1.position);
     var currentDist = diff.length();
     if (currentDist == 0) return; // prevents division by 0
@@ -116,7 +129,7 @@ function satisifyConstrains(p1, p2, distance) {
 }
 
 function repelParticles( p1, p2, distance) {
-    var diff;
+    var diff = new THREE.Vector3();
     diff.subVectors(p2.position, p1.position);
     var currentDist = diff.length();
     if (currentDist == 0) return; // prevents division by 0
@@ -128,6 +141,28 @@ function repelParticles( p1, p2, distance) {
 
   }
 
+}
+
+function simulate(time)
+{
+    if ( ! lastTime ) {
+        lastTime = time;
+        return;
+    }
+
+    var i, il, particles, particle, pt, constrains, constrain;
+    for ( particles = cloth.particles, i = 0, il = particles.length; i < il; i ++ )
+    {
+        particle = particles[ i ];
+        particle.addForce( gravity );
+        particle.integrate( TIMESTEP_SQ ); // performs verlet integration
+    }
+    constrains = cloth.constrains,
+    il = constrains.length;
+    for ( i = 0; i < il; i ++ ) {
+        constrain = constrains[ i ];
+        satisifyConstrains( constrain[ 0 ], constrain[ 1 ], constrain[ 2 ], constrain[ 3] );
+    }
 }
 
 function Cloth(w, h, l) {
@@ -231,46 +266,10 @@ function Cloth(w, h, l) {
 
 }
 
-// function draw()
-// {
-//     // clear the framebuffer
-//   gl.clear(gl.COLOR_BUFFER_BIT);
-
-//   // bind the shader
-//   gl.useProgram(shader);
-
-//   // bind the vertex buffer
-//   gl.bindBuffer(gl.ARRAY_BUFFER, vertexbuffer);
-
-//   // get the index for the a_Position attribute defined in the vertex shader
-//   var positionIndex = gl.getAttribLocation(shader, 'a_Position');
-//   if (positionIndex < 0) {
-//     console.log('Failed to get the storage location of a_Position');
-//     return;
-//   }
-
-//   // "enable" the a_position attribute
-//   gl.enableVertexAttribArray(positionIndex);
-
-//   // associate the data in the currently bound buffer with the a_position attribute
-//   // (The '2' specifies there are 2 floats per vertex in the buffer.  Don't worry about
-//   // the last three args just yet.)
-//   gl.vertexAttribPointer(positionIndex, 2, gl.FLOAT, false, 0, 0);
-
-//   gl.bindBuffer(gl.ARRAY_BUFFER, null);
-
-//   gl.drawArrays(gl.TRIANGLES, 0, 6);
-
-//   // unbind shader and "disable" the attribute indices
-//   // (not really necessary when there is only one shader)
-//   gl.disableVertexAttribArray(positionIndex);
-//   gl.useProgram(null);
-// }
-
 
 function render() {
 
-	// var timer = Date.now() * 0.0002; // we're not using this for now - this is used for cloth simulation over time
+	// var timer = Date.now() * 0.0002; // we're not using this for now - this is used for auto-rotation of camera
 
 
 	// update position of the cloth
@@ -304,44 +303,12 @@ function render() {
 }
 
 
-// Change the name of this function to `main` to see
-// TODO - delete this when scene is working lol
-function basicScene() {
-    // Create scene and camera
-    const scene = new THREE.Scene();
-    const camera = new THREE.PerspectiveCamera( 75, window.innerWidth / window.innerHeight, 0.1, 1000 );
-    camera.position.z = 5;
-
-    const renderer = new THREE.WebGLRenderer();
-    renderer.setSize( window.innerWidth, window.innerHeight );
-    document.body.appendChild( renderer.domElement ); // I think this is only needed if you're not passing in canvas in constructor (2 lines above)
-
-
-    // create object / materials and add them to the scene
-    const geometry = new THREE.BoxGeometry( 1, 1, 1 );
-    const material = new THREE.MeshBasicMaterial( { color: 0x00ff00 } );
-    const cube = new THREE.Mesh( geometry, material );
-    scene.add( cube );
-
-    // start animation
-    function animate() {
-        requestAnimationFrame( animate );
-
-        cube.rotation.x += 0.01;
-        cube.rotation.y += 0.01;
-
-        renderer.render( scene, camera );
-    };
-
-    animate();
-}
-
 function main()
 {
     // Create scene, camera, & renderer
     scene = new THREE.Scene();
     // TODO - determine new color for this
-    scene.fog = new THREE.Fog( 0xFFFFFF, 500, 10000 );
+    scene.fog = new THREE.Fog( 0xD3D3D3, 500, 10000 );
 
     camera = new THREE.PerspectiveCamera( 30, window.innerWidth / window.innerHeight, 1, 10000 );
 	camera.position.y = 450;
@@ -377,12 +344,9 @@ function main()
 	scene.add( light );
 
     
-    
-    // key handler
-    //window.onkeypress = handleKeyPress;
+    // Create cloth & add it to the scene
     // clothGeometry = new THREE.ParametricGeometry(initialBlanketPos, xSegs, ySegs );
     blanket = new THREE.ParametricGeometry(initialBlanketPos, xSegs, ySegs);
-    console.log(blanket);
     var verts = blanket.vertices;
     blanket.dynamic = true;
 
@@ -400,7 +364,31 @@ function main()
 
     scene.add( object );
 
-    //camera.position.z = 5;
+
+
+    var itemGeo = new THREE.SphereGeometry( itemSize, 20, 20 );
+	// sphere material
+	itemMaterial = new THREE.MeshPhongMaterial( {
+		color: 0xaaaaaa,
+		side: THREE.DoubleSide,
+		transparent: false, 
+		opacity:0.01
+	} );
+	// sphere mesh
+	sphere = new THREE.Mesh( itemGeo, itemMaterial );
+	sphere.castShadow = true;
+	sphere.receiveShadow = true;
+	scene.add( sphere ); // add sphere to scene
+
+    // Create table
+	var boxGeo = new THREE.BoxGeometry( 250, 100, 250 );
+    table = new THREE.Mesh( itemGeo, itemMaterial );
+    table.position.x = 0;
+    table.position.y = 0;
+    table.position.z = 0;
+    table.receiveShadow = true;
+    table.castShadow = true;
+    scene.add( table );
 
   // get graphics context using its id
 //   gl = getGraphicsContext("theCanvas");
@@ -413,20 +401,18 @@ function main()
 
   // specify a fill color for clearing the framebuffer
   //gl.clearColor(0.0, 0.8, 0.8, 1.0);
-  
-// TODO - determine if we want this
 
 
   // define an animation loop
   var animate = function() {
-	render();
-    
-	// request that the browser calls animate() again "as soon as it can"
-    requestAnimationFrame(animate);
-    //renderer.render( scene, camera );
+	requestAnimationFrame( animate );
+
+	var time = Date.now();
+
+	simulate(time); // run physics simulation to create new positions of cloth
+	render(); 		// update position of cloth, compute normals, rotate camera, render the scene
   };
 
-  // start drawing!
   animate();
 }
 
