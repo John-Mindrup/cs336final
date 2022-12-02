@@ -61,15 +61,23 @@ var fabricLength = 600;
 var restDistance;
 var restDistanceB = 2;
 var restDistanceS = Math.sqrt(2);
-var xSegs = 30; // how many particles wide is the cloth
-var ySegs = 30; // how many particles tall is the cloth
+var xSegs = 50; // how many particles wide is the cloth
+var ySegs = 50; // how many particles tall is the cloth
 
 var itemSize = 40;
-var table;
+var boundingTable, visibleTable;
+var a, b, c, d, e, f; // used for bounding box corrdinates
+var posFriction = new THREE.Vector3( 0, 0, 0 );
+var posNoFriction = new THREE.Vector3( 0, 0, 0 );
+var friction = 0.9; // similar to coefficient of friction. 0 = frictionless, 1 = cloth sticks in place
+//var clothInitialPosition = plane( 500, 500 );
+
+
 
 var initialBlanketPos = Blanket(500, 500);
 var blanket;
 var cloth = new Cloth( xSegs, ySegs, fabricLength );
+var boundingBox;
 
 var lastTime;
 
@@ -143,6 +151,50 @@ function repelParticles( p1, p2, distance) {
 
 }
 
+
+function restartCloth()
+{
+    scene.remove(object);
+
+    // recreate cloth geometry
+    blanket = new THREE.PlaneGeometry(500,500, xSegs, ySegs);
+    blanket.dynamic = true;
+
+    // recreate cloth mesh
+    object = new THREE.Mesh( blanket, clothMaterial );
+    object.position.set( 0, 0, 0 );
+    object.castShadow = true;
+
+    scene.add( object ); // adds the cloth to the scene
+}
+
+function createThing(thing){
+    if(thing == 'Ball' || thing == 'ball'){
+      boundingTable.visible = false;
+      visibleTable.visible = false;
+      restartCloth();
+    }
+    else if(thing == 'Table' || thing == 'table'){
+  
+      // these variables are used in the table collision detection
+      a = boundingBox.min.x;
+      b = boundingBox.min.y;
+      c = boundingBox.min.z;
+      d = boundingBox.max.x;
+      e = boundingBox.max.y;
+      f = boundingBox.max.z;
+      boundingTable.visible = true;
+      visibleTable.visible = true;
+
+      restartCloth();
+    }
+    else if(thing == 'None' || thing == 'none'){
+      boundingTable.visible = false;
+      visibleTable.visible = false;
+    }
+  
+  }
+
 function simulate(time)
 {
     if ( ! lastTime ) {
@@ -162,6 +214,70 @@ function simulate(time)
     for ( i = 0; i < il; i ++ ) {
         constrain = constrains[ i ];
         satisifyConstrains( constrain[ 0 ], constrain[ 1 ], constrain[ 2 ], constrain[ 3] );
+    }
+
+    for ( particles = cloth.particles, i = 0, il = particles.length; i < il; i ++ )
+  {
+
+    particle = particles[ i ];
+    whereAmI = particle.position;
+    whereWasI = particle.previous;
+        if(boundingBox.containsPoint(whereAmI)){
+            // if yes, we've collided, so take correcting action
+    
+            // no friction behavior:
+            // place point at the nearest point on the surface of the cube
+            currentX = whereAmI.x;
+            currentY = whereAmI.y;
+            currentZ = whereAmI.z;
+    
+            if(currentX <= (a + d)/2){nearestX = a;}
+            else{nearestX = d;}
+    
+            if(currentY <= (b + e)/2){nearestY = b;}
+            else{nearestY = e;}
+    
+            if(currentZ <= (c + f)/2){nearestZ = c;}
+            else{nearestZ = f;}
+    
+            xDist = Math.abs(nearestX-currentX);
+            yDist = Math.abs(nearestY-currentY);
+            zDist = Math.abs(nearestZ-currentZ);
+    
+            posNoFriction.copy(whereAmI);
+    
+            if(zDist<=xDist && zDist<=yDist)
+            {
+              posNoFriction.z = nearestZ;
+            }
+            else if(yDist<=xDist && yDist<=zDist)
+            {
+              posNoFriction.y = nearestY;
+            }
+            else if(xDist<=yDist && xDist<=zDist)
+            {
+              posNoFriction.x = nearestX;
+            }
+    
+            if(!boundingBox.containsPoint(whereWasI)){
+              // with friction behavior:
+              // set particle to its previous position
+              posFriction.copy(whereWasI);
+              whereAmI.copy(posFriction.multiplyScalar(friction).add(posNoFriction.multiplyScalar(1-friction)));
+            }
+            else{
+              whereAmI.copy(posNoFriction);
+            }
+          }
+    }
+
+    // cloth hits the floor
+    for ( particles = cloth.particles, i = 0, il = particles.length
+        ; i < il; i ++ )
+    {
+      particle = particles[ i ];
+      pos = particle.position;
+      if ( pos.y < - 249 ) {pos.y = - 249;}
     }
 }
 
@@ -345,9 +461,7 @@ function main()
 
     
     // Create cloth & add it to the scene
-    // clothGeometry = new THREE.ParametricGeometry(initialBlanketPos, xSegs, ySegs );
-    blanket = new THREE.ParametricGeometry(initialBlanketPos, xSegs, ySegs);
-    var verts = blanket.vertices;
+    blanket = new THREE.PlaneGeometry(500,500, xSegs, ySegs);
     blanket.dynamic = true;
 
     clothMaterial = new THREE.MeshPhongMaterial( {
@@ -366,41 +480,62 @@ function main()
 
 
 
+    // add ground
+    const groundMaterial = new THREE.MeshPhongMaterial({
+        color: 0xDEDEDE,//0x3c3c3c,
+        specular: 0x404761//0x3c3c3c//,
+        //map: groundTexture
+    } );
+	var mesh = new THREE.Mesh( new THREE.PlaneBufferGeometry( 20000, 20000 ), groundMaterial );
+	mesh.position.y = -250;
+	mesh.rotation.x = - Math.PI / 2;
+	mesh.receiveShadow = true;
+	scene.add( mesh ); // add ground to scene
+
+
     var itemGeo = new THREE.SphereGeometry( itemSize, 20, 20 );
-	// sphere material
-	itemMaterial = new THREE.MeshPhongMaterial( {
+	// bounding item material (transparent) 
+	boundingItemMaterial = new THREE.MeshPhongMaterial({
+		color: 0xaaaaaa,
+		side: THREE.DoubleSide,
+		transparent: true, 
+		opacity:0.01
+	});
+
+    // visible item material - this is used for illusion :) 
+    visibleItemMaterial = new THREE.MeshPhongMaterial({
 		color: 0xaaaaaa,
 		side: THREE.DoubleSide,
 		transparent: false, 
 		opacity:0.01
-	} );
-	// sphere mesh
-	sphere = new THREE.Mesh( itemGeo, itemMaterial );
-	sphere.castShadow = true;
-	sphere.receiveShadow = true;
-	scene.add( sphere ); // add sphere to scene
+	});
+    
 
     // Create table
 	var boxGeo = new THREE.BoxGeometry( 250, 100, 250 );
-    table = new THREE.Mesh( itemGeo, itemMaterial );
-    table.position.x = 0;
-    table.position.y = 0;
-    table.position.z = 0;
-    table.receiveShadow = true;
-    table.castShadow = true;
-    scene.add( table );
+    boundingTable = new THREE.Mesh( boxGeo, boundingItemMaterial );
+    boundingTable.position.x = 0;
+    boundingTable.position.y = 0;
+    boundingTable.position.z = 0;
+    // don't show shadow of invisible box
+    boundingTable.receiveShadow = false;
+    boundingTable.castShadow = false;
+    scene.add( boundingTable );
 
-  // get graphics context using its id
-//   gl = getGraphicsContext("theCanvas");
+    var boxGeo = new THREE.BoxGeometry( 200, 84, 200 );
+    visibleTable = new THREE.Mesh( boxGeo, visibleItemMaterial );
+    visibleTable.position.x = 0;
+    visibleTable.position.y = 0;
+    visibleTable.position.z = 0;
+    visibleTable.receiveShadow = true;
+    visibleTable.castShadow = true; // need to add ground if want to see shadow
+    scene.add( visibleTable );
 
-  // load and compile the shader pair
-//   shader = createShaderProgram(gl, vshaderSource, fshaderSource);
 
-  // load the vertex data into GPU memory
-  //vertexbuffer = createAndLoadBuffer(blanket.vertices);
+    boundingTable.geometry.computeBoundingBox();
+	boundingBox = boundingTable.geometry.boundingBox.clone();
 
-  // specify a fill color for clearing the framebuffer
-  //gl.clearColor(0.0, 0.8, 0.8, 1.0);
+    createThing('table');
 
 
   // define an animation loop
