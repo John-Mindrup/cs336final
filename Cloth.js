@@ -61,15 +61,15 @@ var fabricLength = 600;
 var restDistance;
 var restDistanceB = 2;
 var restDistanceS = Math.sqrt(2);
-var xSegs = 50; // how many particles wide is the cloth
-var ySegs = 50; // how many particles tall is the cloth
+var xSegs = 35; // how many particles wide is the cloth
+var ySegs = 35; // how many particles tall is the cloth
 
 var itemSize = 40;
 var boundingTable, visibleTable;
 var a, b, c, d, e, f; // used for bounding box corrdinates
 var posFriction = new THREE.Vector3( 0, 0, 0 );
 var posNoFriction = new THREE.Vector3( 0, 0, 0 );
-var friction = 0.9; // similar to coefficient of friction. 0 = frictionless, 1 = cloth sticks in place
+var friction = .9; // similar to coefficient of friction. 0 = frictionless, 1 = cloth sticks in place
 //var clothInitialPosition = plane( 500, 500 );
 
 
@@ -84,7 +84,7 @@ var lastTime;
 function Blanket(width, height) {
     return function (u, v) {
         var x = u * width - width / 2;
-        var y = 125;
+        var y = 150;
         var z = v * height - height / 2;
         return new THREE.Vector3(x, y, z);
     }
@@ -156,8 +156,12 @@ function restartCloth()
 {
     scene.remove(object);
 
+    cloth = new Cloth( xSegs, ySegs, fabricLength );
+
+	gravity = new THREE.Vector3( 0, - GRAVITY, 0 ).multiplyScalar( MASS );
+
     // recreate cloth geometry
-    blanket = new THREE.PlaneGeometry(500,500, xSegs, ySegs);
+    blanket = new THREE.ParametricGeometry(initialBlanketPos, xSegs, ySegs);
     blanket.dynamic = true;
 
     // recreate cloth mesh
@@ -369,6 +373,29 @@ function Cloth(w, h, l) {
         }
     }
 
+    //bias effect
+    for (v=0;v<=h;v++)
+   {
+    for (u=0;u<=w;u++)
+    {
+
+      if(v<h && u<w){
+        constrains.push([
+          particles[index(u, v)],
+          particles[index(u+1, v+1)],
+          restDistanceS*restDistance
+        ]);
+
+        constrains.push([
+          particles[index(u+1, v)],
+          particles[index(u, v+1)],
+          restDistanceS*restDistance
+        ]);
+      }
+
+    }
+   }
+
      this.particles = particles;
      this.constrains = constrains;
 
@@ -385,7 +412,7 @@ function Cloth(w, h, l) {
 
 function render() {
 
-	// var timer = Date.now() * 0.0002; // we're not using this for now - this is used for auto-rotation of camera
+	 var timer = Date.now() * 0.0002; // we're not using this for now - this is used for auto-rotation of camera
 
 
 	// update position of the cloth
@@ -404,15 +431,13 @@ function render() {
 	blanket.verticesNeedUpdate = true;
 
     // TODO - change this to use table
-	// // update sphere position from ball position
-	// sphere.position.copy( ballPosition );
 
 	// // option to auto-rotate camera
-	// if ( rotate ) {
-	// 	var cameraRadius = Math.sqrt(camera.position.x*camera.position.x + camera.position.z*camera.position.z);
-	// 	camera.position.x = Math.cos( timer ) * cameraRadius;
-	// 	camera.position.z = Math.sin( timer ) * cameraRadius;
-	// }
+	
+	var cameraRadius = Math.sqrt(camera.position.x*camera.position.x + camera.position.z*camera.position.z);
+	camera.position.x = Math.cos( timer ) * cameraRadius;
+	camera.position.z = Math.sin( timer ) * cameraRadius;
+
 
 	camera.lookAt( scene.position );
 	renderer.render( scene, camera ); // render the scene
@@ -424,11 +449,11 @@ function main()
     // Create scene, camera, & renderer
     scene = new THREE.Scene();
     // TODO - determine new color for this
-    scene.fog = new THREE.Fog( 0xD3D3D3, 500, 10000 );
+    scene.fog = new THREE.Fog(0xcce0ff,500,10000);
 
     camera = new THREE.PerspectiveCamera( 30, window.innerWidth / window.innerHeight, 1, 10000 );
 	camera.position.y = 450;
-	camera.position.z = 1500;
+	camera.position.z = -1500;
 
     renderer = new THREE.WebGLRenderer();
     document.body.appendChild( renderer.domElement ); // This adds a canvas to the page for us. For some reason it doesn't like when we pass in an existing canvas element (in WebGLRenderer constructor)
@@ -437,12 +462,13 @@ function main()
 	renderer.gammaInput = true;
 	renderer.gammaOutput = true;
 	renderer.shadowMap.enabled = true;
+    renderer.shadowMap.renderSingleSided = false;
 
 
     // Create light & add it to the scene
     var light, materials;
-	scene.add( new THREE.AmbientLight( 0xFFFFFF ) );
-	light = new THREE.DirectionalLight( 0x000000, 1.75 );
+	scene.add( new THREE.AmbientLight( 0x666666 ) );
+	light = new THREE.DirectionalLight( 0xdfebff, 1.75 );
 	light.position.set( 50, 200, 100 );
 	light.position.multiplyScalar( 1.3 );
 	light.castShadow = true;
@@ -461,20 +487,19 @@ function main()
 
     
     // Create cloth & add it to the scene
-    blanket = new THREE.PlaneGeometry(500,500, xSegs, ySegs);
+    blanket = new THREE.ParametricGeometry(initialBlanketPos, xSegs, ySegs);
     blanket.dynamic = true;
 
     clothMaterial = new THREE.MeshPhongMaterial( {
-        color: 0xaa2929,
+        color: 0x2929aa,
         specular: 0x030303,
-        wireframeLinewidth: 2,
-        //map: clothTexture,
-        side: THREE.DoubleSide,
-        alphaTest: 0.5
+        side: THREE.DoubleSide
     } );
 
     object = new THREE.Mesh( blanket, clothMaterial );
 	object.position.set( 0, 0, 0 );
+    object.receiveShadow = true;
+    object.castShadow = true;
 
     scene.add( object );
 
@@ -482,8 +507,8 @@ function main()
 
     // add ground
     const groundMaterial = new THREE.MeshPhongMaterial({
-        color: 0xDEDEDE,//0x3c3c3c,
-        specular: 0x404761//0x3c3c3c//,
+        color: 0x111111,//0x3c3c3c,
+        specular: 0x3c3c3c//0x3c3c3c//,
         //map: groundTexture
     } );
 	var mesh = new THREE.Mesh( new THREE.PlaneBufferGeometry( 20000, 20000 ), groundMaterial );
@@ -492,8 +517,6 @@ function main()
 	mesh.receiveShadow = true;
 	scene.add( mesh ); // add ground to scene
 
-
-    var itemGeo = new THREE.SphereGeometry( itemSize, 20, 20 );
 	// bounding item material (transparent) 
 	boundingItemMaterial = new THREE.MeshPhongMaterial({
 		color: 0xaaaaaa,
@@ -504,10 +527,8 @@ function main()
 
     // visible item material - this is used for illusion :) 
     visibleItemMaterial = new THREE.MeshPhongMaterial({
-		color: 0xaaaaaa,
-		side: THREE.DoubleSide,
-		transparent: false, 
-		opacity:0.01
+		color: 0x231709,
+		side: THREE.DoubleSide
 	});
     
 
@@ -527,10 +548,9 @@ function main()
     visibleTable.position.x = 0;
     visibleTable.position.y = 0;
     visibleTable.position.z = 0;
-    visibleTable.receiveShadow = true;
+    visibleTable.receiveShadow = false;
     visibleTable.castShadow = true; // need to add ground if want to see shadow
     scene.add( visibleTable );
-
 
     boundingTable.geometry.computeBoundingBox();
 	boundingBox = boundingTable.geometry.boundingBox.clone();
