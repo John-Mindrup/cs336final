@@ -78,6 +78,7 @@ var cloth = new Cloth(xSegs, ySegs, fabricLength);
 var boundingBox;
 var isFlag;
 var lastTime;
+var mesh;
 
 function Blanket(width, height) {
   return function (u, v) {
@@ -200,7 +201,7 @@ function simulate(time) {
   if (wind) {
     windStrength = 100;
     windForce
-      .set(0, 10, 0)
+      .set(-10, -10, 0)
       .normalize()
       .multiplyScalar(windStrength);
 
@@ -297,7 +298,7 @@ function simulate(time) {
 
   if (isFlag) {
     for (u = 0; u <= xSegs; u++) {
-      particles[cloth.index(0, u)].lockToOriginal();
+      particles[cloth.index(0, u)].lock();
     }
   }
 
@@ -441,12 +442,12 @@ function render() {
 
   // // option to auto-rotate camera
 
-  var cameraRadius = Math.sqrt(
-    camera.position.x * camera.position.x +
-      camera.position.z * camera.position.z
-  );
-  camera.position.x = Math.cos(timer) * cameraRadius;
-  camera.position.z = Math.sin(timer) * cameraRadius;
+  //var cameraRadius = Math.sqrt(
+ //   camera.position.x * camera.position.x +
+//      camera.position.z * camera.position.z
+//  );
+  //camera.position.x = Math.cos(timer) * cameraRadius;
+  //camera.position.z = Math.sin(timer) * cameraRadius;
 
   camera.lookAt(scene.position);
   renderer.render(scene, camera); // render the scene
@@ -519,7 +520,7 @@ function main() {
     specular: 0x3c3c3c, //0x3c3c3c//,
     //map: groundTexture
   });
-  var mesh = new THREE.Mesh(
+  mesh = new THREE.Mesh(
     new THREE.PlaneBufferGeometry(20000, 20000),
     groundMaterial
   );
