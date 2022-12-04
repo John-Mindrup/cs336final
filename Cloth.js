@@ -40,6 +40,11 @@ var shader;
 var MASS = 0.1;
 var DRAG = 0.97;
 
+var wind = false;
+var windStrength;
+var windForce = new THREE.Vector3(0, 0, 0);
+var tmpForce = new THREE.Vector3();
+
 var GRAVITY = 9.81 * 140;
 var gravity = new THREE.Vector3(0, -GRAVITY, 0).multiplyScalar(MASS);
 
@@ -71,7 +76,7 @@ var initialBlanketPos = Blanket(500, 500);
 var blanket;
 var cloth = new Cloth(xSegs, ySegs, fabricLength);
 var boundingBox;
-
+var isFlag;
 var lastTime;
 
 function Blanket(width, height) {
@@ -106,6 +111,15 @@ Particle.prototype.integrate = function (timesq) {
   this.previous = this.position;
   this.position = newPos;
   this.accel.set(0, 0, 0);
+};
+Particle.prototype.lockToOriginal = function () {
+  this.position.copy(this.original);
+  this.previous.copy(this.original);
+};
+
+Particle.prototype.lock = function () {
+  this.position.copy(this.previous);
+  this.previous.copy(this.previous);
 };
 
 function satisifyConstrains(p1, p2, distance) {
@@ -182,6 +196,29 @@ function simulate(time) {
     return;
   }
 
+  // Aerodynamics forces
+  if (wind) {
+    windStrength = 100;
+    windForce
+      .set(0, 10, 0)
+      .normalize()
+      .multiplyScalar(windStrength);
+
+    // apply the wind force to the cloth particles
+    var face,
+      faces = blanket.faces,
+      normal;
+    particles = cloth.particles;
+    for (i = 0, il = faces.length; i < il; i++) {
+      face = faces[i];
+      normal = face.normal;
+      tmpForce.copy(normal).normalize().multiplyScalar(normal.dot(windForce));
+      particles[face.a].addForce(tmpForce);
+      particles[face.b].addForce(tmpForce);
+      particles[face.c].addForce(tmpForce);
+    }
+  }
+
   var i, il, particles, particle, pt, constrains, constrain;
   for (particles = cloth.particles, i = 0, il = particles.length; i < il; i++) {
     particle = particles[i];
@@ -194,7 +231,11 @@ function simulate(time) {
     satisifyConstrains(constrain[0], constrain[1], constrain[2], constrain[3]);
   }
 
-  for (particles = cloth.particles, i = 0, il = particles.length; i < il; i++) {
+  for (
+    particles = cloth.particles, i = 0, il = particles.length;
+    i < il && boundingBox != null;
+    i++
+  ) {
     particle = particles[i];
     whereAmI = particle.position;
     whereWasI = particle.previous;
@@ -251,6 +292,12 @@ function simulate(time) {
       } else {
         whereAmI.copy(posNoFriction);
       }
+    }
+  }
+
+  if (isFlag) {
+    for (u = 0; u <= xSegs; u++) {
+      particles[cloth.index(0, u)].lockToOriginal();
     }
   }
 
