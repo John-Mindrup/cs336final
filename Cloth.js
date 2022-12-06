@@ -40,7 +40,6 @@ var shader;
 var MASS = 0.1;
 var DRAG = 0.97;
 
-var wind = false;
 var windStrength;
 var windForce = new THREE.Vector3(0, 0, 0);
 var tmpForce = new THREE.Vector3();
@@ -76,18 +75,26 @@ var blanket;
 var cloth = new Cloth(xSegs, ySegs, fabricLength);
 var boundingBox;
 var isFlag;
+var isOnFlagPole = false;;
 var lastTime;
 var mesh;
 var groundMaterial;
 
+const loader = new THREE.TextureLoader();
+const flagImage = loader.load('us_flag.jpg');
+
 const canvas = document.getElementById("theCanvas");
 const groundColorPicker = document.getElementById('ground-color-picker');
 const clothColorPicker = document.getElementById('cloth-color-picker');
+const flagOption = document.getElementById('flag-option');
+const colorOption = document.getElementById('color-option');
+const windOption = document.getElementById('wind-option');
 const colors = {
   ground: groundColorPicker.value,
   cloth: clothColorPicker.value
 };
-
+var isFlag = flagOption.checked;
+var isWind = windOption.checked;
 
 
 function Blanket(width, height) {
@@ -208,7 +215,7 @@ function simulate(time) {
   }
 
   // Aerodynamics forces
-  if (wind) {
+  if (isWind) {
     windStrength = 100;
     windForce
       .set(-10, -10, 0)
@@ -306,7 +313,7 @@ function simulate(time) {
     }
   }
 
-  if (isFlag) {
+  if (isOnFlagPole) {
     for (u = 0; u <= xSegs; u++) {
       particles[cloth.index(0, u)].lock();
     }
@@ -512,9 +519,10 @@ function main() {
   blanket.dynamic = true;
 
   clothMaterial = new THREE.MeshPhongMaterial({
-    color: colors.cloth,
+    color: isFlag ? '#ffffff' : colors.cloth,
     specular: '#030303',
     side: THREE.DoubleSide,
+    map: isFlag ? flagImage : null,
   });
 
   object = new THREE.Mesh(blanket, clothMaterial);
@@ -615,4 +623,37 @@ clothColorPicker.addEventListener('input', () => {
   clothMaterial.needsUpdate = true;
 });
 
+flagOption.addEventListener('input', () => {
+  isFlag = flagOption.checked;
 
+  if (isFlag) {
+    colors.cloth = '#ffffff';
+    clothColorPicker.style.visibility = 'hidden';
+  }
+  clothMaterial.setValues({
+    map: isFlag ? flagImage : null,
+    color: colors.cloth
+  });
+  clothMaterial.needsUpdate = true;
+});
+
+
+colorOption.addEventListener('input', () => {
+  isFlag = flagOption.checked;
+
+  if (!isFlag) {
+    clothColorPicker.style.visibility = 'visible';
+    colors.cloth = clothColorPicker.value;
+    clothMaterial.setValues({
+      map: isFlag ? flagImage : null,
+      color: colors.cloth
+    });
+    clothMaterial.needsUpdate = true;
+  }
+});
+
+
+
+windOption.addEventListener('input', () => {
+  isWind = windOption.checked;
+});

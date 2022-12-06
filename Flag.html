@@ -29,16 +29,43 @@
         color: #000000;
         text-decoration: none;
       }
-
+      #settings {
+        position: fixed;
+        background-color: rgba(0, 0, 0, 0.3);
+        padding: 10;
+        top: 0px;
+        left: 0px;
+        text-align: right;
+      }
+ 
     </style>
   </head>
 
   <body>
-    <!-- We're having the Canvas element be inserted with the construction of the renderer object for now -->
-    <!-- <canvas id="theCanvas" width="400" height="400">
-    Please use a browser that supports "canvas"
-    </canvas>
-	-->
+    <div id="settings">
+      <h4 style="text-align: center;">Options</h4>
+
+      <h5 style="text-align: center;">Material</h5>
+      <label for="flag-option">Flag</label>
+      <input type="radio" name="cloth-type" id="flag-option" value="flag" checked />
+      <label for="color-option">Color</label>
+      <input type="radio" name="cloth-type" id="color-option" value="color" />
+      <br />
+      <input type="color" id="cloth-color-picker" value="#2929aa" style="visibility: hidden;" />
+      <br />
+      <hr />
+
+      
+
+      <h5 style="text-align: center;">Environment</h5>
+      <label for="ground-color-picker">Ground</label>
+      <input type="color" id="ground-color-picker" value="#111111">
+      <br />
+      <label for="wind-option">Wind</label>
+      <input type="checkbox" id="wind-option" checked />
+    </div>
+
+
     <div id="footer-bar">
       <div class="footer-btn">
         <a href="../">Home</a>

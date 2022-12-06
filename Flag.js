@@ -1,21 +1,14 @@
 function flag() {
-  isFlag = true;
-  wind = true;
-  const loader = new THREE.TextureLoader();
+  isOnFlagPole = true;
 
   main();
   var cameraRadius = Math.sqrt(
- camera.position.x * camera.position.x +
+  camera.position.x * camera.position.x +
       camera.position.z * camera.position.z
   );
   camera.position.x = Math.cos(-Math.PI/6) * cameraRadius;
   camera.position.z = Math.sin(-Math.PI/6) * cameraRadius;
-  clothMaterial = new THREE.MeshPhongMaterial({
-    //color: 0x2929aa,
-    //specular: 0x030303,
-    side: THREE.DoubleSide,
-    map: loader.load('us_flag.jpg'),
-  });
+ 
   restartCloth();
   boundingBox = null;
   scene.remove(visibleTable);

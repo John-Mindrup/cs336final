@@ -43,13 +43,27 @@
   <body>
     <div id="settings">
       <h4 style="text-align: center;">Options</h4>
-      <label for="cloth-color-picker">Cloth</label>
-      <input type="color" id="cloth-color-picker" value="#2929aa">
+
+      <h5 style="text-align: center;">Material</h5>
+      <label for="flag-option">Flag</label>
+      <input type="radio" name="cloth-type" id="flag-option" value="flag" />
+      <label for="color-option">Color</label>
+      <input type="radio" name="cloth-type" id="color-option" value="color" checked />
       <br />
+      <input type="color" id="cloth-color-picker" value="#2929aa" />
+      <br />
+      <hr />
+
       
+
+      <h5 style="text-align: center;">Environment</h5>
       <label for="ground-color-picker">Ground</label>
       <input type="color" id="ground-color-picker" value="#111111">
+      <br />
+      <label for="wind-option">Wind</label>
+      <input type="checkbox" id="wind-option" />
     </div>
+
     <div id="footer-bar">
       <div class="footer-btn">
         <a href="../">Home</a>
