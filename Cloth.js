@@ -124,17 +124,16 @@ Particle.prototype.lock = function () {
 };
 
 function satisifyConstrains(p1, p2, distance) {
-  var spring = -2;
+  var spring = 3;
   var p1top2 = new THREE.Vector3();
-  p1top2.subVectors(p2.position, p1.position);
+  p1top2.subVectors(p2.position, p1.position).normalize();
   var p2top1 = new THREE.Vector3();
-  p1top2.subVectors(p1.position, p2.position);
+  p1top2.subVectors(p1.position, p2.position).normalize();
   
   var currentDist = p1top2.length();
-  if (currentDist == 0) return; // prevents division by 0
-  var compression = (currentDist - distance);
-  p1.addForce(p1top2.multiplyScaler(spring*compression));
-  p2.addForce(p2top1.multiplyScaler(spring*compression));
+  var compression = (distance - currentDist);
+  p1.addForce(p1top2.multiplyScalar(-spring*compression));
+  p2.addForce(p2top1.multiplyScalar(-spring*compression));
 }
 
 function restartCloth() {
@@ -338,66 +337,9 @@ function Cloth(w, h, l) {
     }
   }
 
-  //cross grain
-  for (v = 0; v < h; v++) {
-    for (u = 0; u < w; u++) {
-      if (u != 0) {
-        constrains.push([
-          particles[index(u, v)],
-          particles[index(u, v + 1)],
-          restDistance,
-        ]);
-      }
+  
 
-      if (v != 0) {
-        constrains.push([
-          particles[index(u, v)],
-          particles[index(u + 1, v)],
-          restDistance,
-        ]);
-      }
-    }
-  }
-
-  //drape effect
-  for (v = 0; v < h; v++) {
-    for (u = 0; u < w; u++) {
-      if (v < h - 1) {
-        constrains.push([
-          particles[index(u, v)],
-          particles[index(u, v + 2)],
-          restDistanceB * restDistance,
-        ]);
-      }
-
-      if (u < w - 1) {
-        constrains.push([
-          particles[index(u, v)],
-          particles[index(u + 2, v)],
-          restDistanceB * restDistance,
-        ]);
-      }
-    }
-  }
-
-  //bias effect
-  for (v = 0; v <= h; v++) {
-    for (u = 0; u <= w; u++) {
-      if (v < h && u < w) {
-        constrains.push([
-          particles[index(u, v)],
-          particles[index(u + 1, v + 1)],
-          restDistanceS * restDistance,
-        ]);
-
-        constrains.push([
-          particles[index(u + 1, v)],
-          particles[index(u, v + 1)],
-          restDistanceS * restDistance,
-        ]);
-      }
-    }
-  }
+  
 
   this.particles = particles;
   this.constrains = constrains;
