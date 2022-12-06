@@ -124,29 +124,17 @@ Particle.prototype.lock = function () {
 };
 
 function satisifyConstrains(p1, p2, distance) {
-  var diff = new THREE.Vector3();
-  diff.subVectors(p2.position, p1.position);
-  var currentDist = diff.length();
+  var spring = -2;
+  var p1top2 = new THREE.Vector3();
+  p1top2.subVectors(p2.position, p1.position);
+  var p2top1 = new THREE.Vector3();
+  p1top2.subVectors(p1.position, p2.position);
+  
+  var currentDist = p1top2.length();
   if (currentDist == 0) return; // prevents division by 0
-  var correction = diff.multiplyScalar((currentDist - distance) / currentDist);
-  var correctionHalf = correction.multiplyScalar(0.5);
-  p1.position.add(correctionHalf);
-  p2.position.sub(correctionHalf);
-}
-
-function repelParticles(p1, p2, distance) {
-  var diff = new THREE.Vector3();
-  diff.subVectors(p2.position, p1.position);
-  var currentDist = diff.length();
-  if (currentDist == 0) return; // prevents division by 0
-  if (currentDist < distance) {
-    var correction = diff.multiplyScalar(
-      (currentDist - distance) / currentDist
-    );
-    var correctionHalf = correction.multiplyScalar(0.5);
-    p1.position.add(correctionHalf);
-    p2.position.sub(correctionHalf);
-  }
+  var compression = (currentDist - distance);
+  p1.addForce(p1top2.multiplyScaler(spring*compression));
+  p2.addForce(p2top1.multiplyScaler(spring*compression));
 }
 
 function restartCloth() {
@@ -221,16 +209,17 @@ function simulate(time) {
   }
 
   var i, il, particles, particle, pt, constrains, constrain;
+  (constrains = cloth.constrains), (il = constrains.length);
+  for (i = 0; i < il; i++) {
+    constrain = constrains[i];
+    satisifyConstrains(constrain[0], constrain[1], constrain[2]);
+  }
   for (particles = cloth.particles, i = 0, il = particles.length; i < il; i++) {
     particle = particles[i];
     particle.addForce(gravity);
     particle.integrate(TIMESTEP_SQ); // performs verlet integration
   }
-  (constrains = cloth.constrains), (il = constrains.length);
-  for (i = 0; i < il; i++) {
-    constrain = constrains[i];
-    satisifyConstrains(constrain[0], constrain[1], constrain[2], constrain[3]);
-  }
+  
 
   for (
     particles = cloth.particles, i = 0, il = particles.length;
