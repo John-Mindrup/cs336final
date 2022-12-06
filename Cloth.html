@@ -12,7 +12,7 @@
         background-color: rgba(255, 255, 255, 0.6);
         position: fixed;
         width: 100%;
-        padding: 10 10 10 10;
+        padding: 10px;
         bottom: 0px;
         left: 0px;
         display: flex;
@@ -28,15 +28,28 @@
         color: #000000;
         text-decoration: none;
       }
+
+      #settings {
+        position: fixed;
+        background-color: rgba(0, 0, 0, 0.3);
+        padding: 10;
+        top: 0px;
+        left: 0px;
+        text-align: right;
+      }
     </style>
   </head>
 
   <body>
-    <!-- We're having the Canvas element be inserted with the construction of the renderer object for now -->
-    <!-- <canvas id="theCanvas" width="400" height="400">
-    Please use a browser that supports "canvas"
-    </canvas>
-	-->
+    <div id="settings">
+      <h4 style="text-align: center;">Options</h4>
+      <label for="cloth-color-picker">Cloth</label>
+      <input type="color" id="cloth-color-picker" value="#2929aa">
+      <br />
+      
+      <label for="ground-color-picker">Ground</label>
+      <input type="color" id="ground-color-picker" value="#111111">
+    </div>
     <div id="footer-bar">
       <div class="footer-btn">
         <a href="../">Home</a>

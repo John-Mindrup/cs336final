@@ -53,8 +53,7 @@ var TIMESTEP_SQ = TIMESTEP * TIMESTEP;
 
 var diff = new THREE.Vector3();
 
-var camera, scene, renderer;
-const canvas = document.getElementById("theCanvas");
+var camera, scene, renderer, ground;
 
 //cloth size properties
 var fabricLength = 400;
@@ -79,6 +78,17 @@ var boundingBox;
 var isFlag;
 var lastTime;
 var mesh;
+var groundMaterial;
+
+const canvas = document.getElementById("theCanvas");
+const groundColorPicker = document.getElementById('ground-color-picker');
+const clothColorPicker = document.getElementById('cloth-color-picker');
+const colors = {
+  ground: groundColorPicker.value,
+  cloth: clothColorPicker.value
+};
+
+
 
 function Blanket(width, height) {
   return function (u, v) {
@@ -457,7 +467,7 @@ function main() {
   // Create scene, camera, & renderer
   scene = new THREE.Scene();
   // TODO - determine new color for this
-  scene.fog = new THREE.Fog(0xcce0ff, 500, 10000);
+  scene.fog = new THREE.Fog('#ffffff', 500, 10000);
 
   camera = new THREE.PerspectiveCamera(
     30,
@@ -479,8 +489,8 @@ function main() {
 
   // Create light & add it to the scene
   var light, materials;
-  scene.add(new THREE.AmbientLight(0x666666));
-  light = new THREE.DirectionalLight(0xdfebff, 1.75);
+  scene.add(new THREE.AmbientLight('#666666'));
+  light = new THREE.DirectionalLight('#dfebff', 1.75);
   light.position.set(50, 200, 100);
   light.position.multiplyScalar(1.3);
   light.castShadow = true;
@@ -502,8 +512,8 @@ function main() {
   blanket.dynamic = true;
 
   clothMaterial = new THREE.MeshPhongMaterial({
-    color: 0x2929aa,
-    specular: 0x030303,
+    color: colors.cloth,
+    specular: '#030303',
     side: THREE.DoubleSide,
   });
 
@@ -515,23 +525,23 @@ function main() {
   scene.add(object);
 
   // add ground
-  const groundMaterial = new THREE.MeshPhongMaterial({
-    color: 0x111111, //0x3c3c3c,
-    specular: 0x3c3c3c, //0x3c3c3c//,
+  groundMaterial = new THREE.MeshPhongMaterial({
+    color: colors.ground, //0x3c3c3c,
+    specular: '#3c3c3c', //0x3c3c3c//,
     //map: groundTexture
   });
-  mesh = new THREE.Mesh(
+  ground = new THREE.Mesh(
     new THREE.PlaneBufferGeometry(20000, 20000),
     groundMaterial
   );
-  mesh.position.y = -250;
-  mesh.rotation.x = -Math.PI / 2;
-  mesh.receiveShadow = true;
-  scene.add(mesh); // add ground to scene
+  ground.position.y = -250;
+  ground.rotation.x = -Math.PI / 2;
+  ground.receiveShadow = true;
+  scene.add(ground); // add ground to scene
 
   // bounding item material (transparent)
   boundingItemMaterial = new THREE.MeshPhongMaterial({
-    color: 0xaaaaaa,
+    color: '#aaaaaa',
     side: THREE.DoubleSide,
     transparent: true,
     opacity: 0.01,
@@ -539,7 +549,7 @@ function main() {
 
   // visible item material - this is used for illusion :)
   visibleItemMaterial = new THREE.MeshPhongMaterial({
-    color: 0x231709,
+    color: '#231709',
     side: THREE.DoubleSide,
   });
 
@@ -585,7 +595,6 @@ function main() {
 window.addEventListener(
   "resize",
   () => {
-    console.log("in new event listener for window sizechange");
 
     camera.aspect = window.innerWidth / window.innerHeight;
     camera.updateProjectionMatrix();
@@ -593,3 +602,17 @@ window.addEventListener(
   },
   false
 );
+
+groundColorPicker.addEventListener('input', () => {
+  colors.ground = groundColorPicker.value;
+  groundMaterial.setValues({ color: colors.ground });
+  groundMaterial.needsUpdate = true;
+});
+
+clothColorPicker.addEventListener('input', () => {
+  colors.cloth = clothColorPicker.value;
+  clothMaterial.setValues({ color: colors.cloth });
+  clothMaterial.needsUpdate = true;
+});
+
+
