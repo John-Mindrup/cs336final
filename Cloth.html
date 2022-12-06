@@ -1,10 +1,32 @@
 <html lang="en">
   <head>
     <meta charset="utf-8" />
-    <title>Basic texture</title>
+    <title>Cloth</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
     <style>
       * {
         margin: 0px;
+      }
+
+      #footer-bar {
+        background-color: rgba(255, 255, 255, 0.6);
+        position: fixed;
+        width: 100%;
+        padding: 10 10 10 10;
+        bottom: 0px;
+        left: 0px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+      .footer-btn {
+        flex: 1;
+        text-align: center;
+        font-size: 1.25rem;
+      }
+      .footer-btn a {
+        color: #000000;
+        text-decoration: none;
       }
     </style>
   </head>
@@ -15,6 +37,14 @@
     Please use a browser that supports "canvas"
     </canvas>
 	-->
+    <div id="footer-bar">
+      <div class="footer-btn">
+        <a href="../">Home</a>
+      </div>
+      <div class="footer-btn">
+        <a href="https://github.com/John-Mindrup/cs336final">GitHub</a>
+      </div>
+    </div>
     <script src="three.min.js"></script>
     <script src="cs336util.js"></script>
     <script src="Cloth.js"></script>
