@@ -79,6 +79,7 @@ var isOnFlagPole = false;;
 var lastTime;
 var mesh;
 var groundMaterial;
+var boundingItemMaterial;
 
 const loader = new THREE.TextureLoader();
 const flagImage = loader.load('us_flag.jpg');
@@ -89,12 +90,15 @@ const clothColorPicker = document.getElementById('cloth-color-picker');
 const flagOption = document.getElementById('flag-option');
 const colorOption = document.getElementById('color-option');
 const windOption = document.getElementById('wind-option');
+const boundingBoxOption = document.getElementById('bounding-box-option');
+const restartButton = document.getElementById('restart-btn');
 const colors = {
   ground: groundColorPicker.value,
   cloth: clothColorPicker.value
 };
 var isFlag = flagOption.checked;
 var isWind = windOption.checked;
+var isShowingBoundingBox = boundingBoxOption.checked;
 
 
 function Blanket(width, height) {
@@ -551,7 +555,7 @@ function main() {
   boundingItemMaterial = new THREE.MeshPhongMaterial({
     color: '#aaaaaa',
     side: THREE.DoubleSide,
-    transparent: true,
+    transparent: !isShowingBoundingBox,
     opacity: 0.01,
   });
 
@@ -656,4 +660,14 @@ colorOption.addEventListener('input', () => {
 
 windOption.addEventListener('input', () => {
   isWind = windOption.checked;
+});
+
+boundingBoxOption.addEventListener('input', () => {
+  isShowingBoundingBox = boundingBoxOption.checked;
+  boundingItemMaterial.setValues({ transparent: !isShowingBoundingBox });
+  boundingItemMaterial.needsUpdate = true;
+});
+
+restartButton.addEventListener('click', () => {
+  restartCloth();
 });
