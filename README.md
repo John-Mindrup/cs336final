@@ -7,10 +7,4 @@ Examples:
 <!-- TODO - include pictures of the above examples -->
 
 
-### About
-TODO
-
-### Struggles
-TODO
-
 
