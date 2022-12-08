@@ -260,7 +260,7 @@ function simulate(time) {
       if (currentY <= (b + e) / 2) {
         nearestY = b;
       } else {
-        nearestY = e + 1;
+        nearestY = e;
       }
 
       if (currentZ <= (c + f) / 2) {
