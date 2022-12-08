@@ -1,41 +1,3 @@
-// vertex shader
-const vshaderSource = `
-attribute vec4 a_Position;
-void main()
-{
-  // pass through so the value gets interpolated
-  
-  gl_Position = a_Position;
-}
-`;
-
-// fragment shader
-const fshaderSource = `
-precision mediump float;
-uniform sampler2D sampler;
-void main()
-{
-  // sample from the texture at the interpolated texture coordinate,
-  // and use the value directly as the surface color
-  vec4 color = vec4(1, 0, 0 , 1);
-  gl_FragColor = color;
-}
-`;
-
-var vertices = new Float32Array([
-  -0.5, -0.5, 0.5, -0.5, 0.5, 0.5, -0.5, -0.5, 0.5, 0.5, -0.5, 0.5,
-]);
-
-// A few global variables...
-
-// the OpenGL context
-var gl;
-
-// handle to a buffer on the GPU
-var vertexbuffer;
-
-// handle to the compiled shader program on the GPU
-var shader;
 //cloth physics properties
 var MASS = 0.1;
 var DRAG = 0.97;
@@ -55,7 +17,7 @@ var diff = new THREE.Vector3();
 var camera, scene, renderer, ground;
 
 //cloth size properties
-var fabricLength = 600;
+var fabricLength = 400;
 var restDistance;
 var restDistanceB = 2;
 var restDistanceS = Math.sqrt(2);
@@ -260,7 +222,7 @@ function simulate(time) {
       if (currentY <= (b + e) / 2) {
         nearestY = b;
       } else {
-        nearestY = e + 1;
+        nearestY = e;
       }
 
       if (currentZ <= (c + f) / 2) {
