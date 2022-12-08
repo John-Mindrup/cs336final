@@ -55,12 +55,12 @@ var diff = new THREE.Vector3();
 var camera, scene, renderer, ground;
 
 //cloth size properties
-var fabricLength = 400;
+var fabricLength = 600;
 var restDistance;
 var restDistanceB = 2;
 var restDistanceS = Math.sqrt(2);
-var xSegs = 35; // how many particles wide is the cloth
-var ySegs = 35; // how many particles tall is the cloth
+var xSegs = 30; // how many particles wide is the cloth
+var ySegs = 30; // how many particles tall is the cloth
 
 var itemSize = 40;
 var boundingTable, visibleTable;
@@ -151,21 +151,6 @@ function satisifyConstrains(p1, p2, distance) {
   p2.position.sub(correctionHalf);
 }
 
-function repelParticles(p1, p2, distance) {
-  var diff = new THREE.Vector3();
-  diff.subVectors(p2.position, p1.position);
-  var currentDist = diff.length();
-  if (currentDist == 0) return; // prevents division by 0
-  if (currentDist < distance) {
-    var correction = diff.multiplyScalar(
-      (currentDist - distance) / currentDist
-    );
-    var correctionHalf = correction.multiplyScalar(0.5);
-    p1.position.add(correctionHalf);
-    p2.position.sub(correctionHalf);
-  }
-}
-
 function restartCloth() {
   scene.remove(object);
 
@@ -186,11 +171,7 @@ function restartCloth() {
 }
 
 function createThing(thing) {
-  if (thing == "Ball" || thing == "ball") {
-    boundingTable.visible = false;
-    visibleTable.visible = false;
-    restartCloth();
-  } else if (thing == "Table" || thing == "table") {
+   if (thing == "Table" || thing == "table") {
     // these variables are used in the table collision detection
     a = boundingBox.min.x;
     b = boundingBox.min.y;
@@ -216,7 +197,7 @@ function simulate(time) {
 
   // Aerodynamics forces
   if (isWind) {
-    windStrength = 100;
+    windStrength = 200;
     windForce
       .set(-10, -10, 0)
       .normalize()
@@ -246,7 +227,7 @@ function simulate(time) {
   (constrains = cloth.constrains), (il = constrains.length);
   for (i = 0; i < il; i++) {
     constrain = constrains[i];
-    satisifyConstrains(constrain[0], constrain[1], constrain[2], constrain[3]);
+    satisifyConstrains(constrain[0], constrain[1], constrain[2]);
   }
 
   for (
@@ -273,7 +254,7 @@ function simulate(time) {
       }
 
       if (currentY <= (b + e) / 2) {
-        nearestY = b;
+        nearestY = b + 1;
       } else {
         nearestY = e;
       }
