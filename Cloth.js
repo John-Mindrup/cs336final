@@ -264,9 +264,9 @@ function simulate(time) {
       }
 
       if (currentZ <= (c + f) / 2) {
-        nearestZ = c;
+        nearestZ = c - 5;
       } else {
-        nearestZ = f;
+        nearestZ = f + 5;
       }
 
       xDist = Math.abs(nearestX - currentX);
@@ -372,28 +372,7 @@ function Cloth(w, h, l) {
     }
   }
 
-  //drape effect
-  for (v = 0; v < h; v++) {
-    for (u = 0; u < w; u++) {
-      if (v < h - 1) {
-        constrains.push([
-          particles[index(u, v)],
-          particles[index(u, v + 2)],
-          restDistanceB * restDistance,
-        ]);
-      }
-
-      if (u < w - 1) {
-        constrains.push([
-          particles[index(u, v)],
-          particles[index(u + 2, v)],
-          restDistanceB * restDistance,
-        ]);
-      }
-    }
-  }
-
-  //bias effect
+  //bias Grain
   for (v = 0; v <= h; v++) {
     for (u = 0; u <= w; u++) {
       if (v < h && u < w) {
@@ -500,6 +479,8 @@ function main() {
   scene.add(light);
 
   // Create cloth & add it to the scene
+  // A plane geometry will have its faced culled by three and wont render the shadow correctly
+  //Use a parametric geometry with a function which makes a square instead
   blanket = new THREE.ParametricGeometry(initialBlanketPos, xSegs, ySegs);
   blanket.dynamic = true;
 
